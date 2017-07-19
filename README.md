@@ -5,4 +5,4 @@ A location emulator based on Xposed framework. It's mainly used to signup for yo
 项目本是用在某公司的签到APP上的，在代码中还留着一些对com.ebai.pn包的一些HOOK。<br>
 由于主要是用来欺骗基于百度地图和系统自带地图的应用，该项目的核心代码是拦截BDLocation的get方法，传入假位置后返回的部分。<br>
 
-取用请随意，但请在'使用时标明作者和来源'。感激不尽！
+取用请随意，但请在`使用时标明作者和来源`。感激不尽！
