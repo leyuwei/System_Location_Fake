@@ -30,12 +30,8 @@ public class Main implements IXposedHookLoadPackage{
 	
 	//庐山路：31.9955200394,118.7272030762
 	//三山街：32.0263185088, 118.7876922371
-	public String latitudes = "32.0263185088";
-	public String lontitudes = "118.7876922371";
-	public float latitudebase = (float) 32.0263185088;
-	public float lontitudebase = (float) 118.7876922371;
-	public float latitude = (float) 32.0263185088;
-	public float lontitude = (float) 118.7876922371;
+	public double latitude = (double) 32.0263185088;
+	public double lontitude = (double) 118.7876922371;
 	
 	public static boolean isEnabledFake = true;
 	private final static String picPathFinal="tfdsTEMP.jpg";
@@ -53,11 +49,9 @@ public class Main implements IXposedHookLoadPackage{
 			return;
 		XposedBridge.log("Loaded app: " + lpparam.packageName);
 		
-		String rec = pre.getString("ll", "32.0263185088+118.7876922371");
-		latitudebase = Float.valueOf(rec.split("\\+")[0]);
-		lontitudebase = Float.valueOf(rec.split("\\+")[1]);
-		latitude = (float) (latitudebase + r.nextDouble()*0.00001);
-		lontitude = (float) (lontitudebase + r.nextDouble()*0.00001);
+		/*String rec = pre.getString("ll", "32.0263185088+118.7876922371");
+		latitude = Float.valueOf(rec.split("\\+")[0]);
+		lontitude = Float.valueOf(rec.split("\\+")[1]);*/
 		
 		if(lpparam.packageName.equals("com.ebeitech.pn")){
 			whichPac = flagWY;
@@ -73,7 +67,7 @@ public class Main implements IXposedHookLoadPackage{
     	fake_all_location(lpparam);
     	fake_gps_data(lpparam);
 		final LoadPackageParam lpfinal = lpparam;
-		fake_photo(lpparam);
+		fake_photo_and_id(lpparam);
 	}
 
 	public void addLog(TextView tv, String x){
@@ -119,12 +113,16 @@ public class Main implements IXposedHookLoadPackage{
 			
 		}
 		
+		// 2018.02.02 下面几段有很多是调用的系统包，不需要进行混淆修订。只修订本次更新混淆的方法名。
 		XposedHelpers.findAndHookMethod("android.location.Location", lpparam.classLoader, "getLatitude", new XC_MethodHook() {  
             @Override  
             protected void beforeHookedMethod(MethodHookParam param)  
                     throws Throwable {  
                 // TODO Auto-generated method stub  
-                super.beforeHookedMethod(param);  
+                super.beforeHookedMethod(param); 
+                if(!pre.getBoolean("isON", true)) return;
+                String rec = pre.getString("ll", "32.0263185088+118.7876922371");
+        		latitude = Double.valueOf(rec.split("\\+")[0]);
                 param.setResult(latitude);  
             }  
         });  
@@ -134,46 +132,58 @@ public class Main implements IXposedHookLoadPackage{
             protected void beforeHookedMethod(MethodHookParam param)  
                     throws Throwable {  
                 // TODO Auto-generated method stub  
-                super.beforeHookedMethod(param);  
+                super.beforeHookedMethod(param);
+                if(!pre.getBoolean("isON", true)) return;
+                String rec = pre.getString("ll", "32.0263185088+118.7876922371");
+        		lontitude = Double.valueOf(rec.split("\\+")[1]);
                 param.setResult(lontitude);  
             }  
         });
          XposedHelpers.findAndHookMethod("android.net.wifi.WifiInfo", lpparam.classLoader, "getBSSID", new XC_MethodHook() {  
              @Override  
              protected void afterHookedMethod(MethodHookParam param) throws Throwable {  
-                 param.setResult("00-00-00-00-00-00-00-00");  
+            	 if(!pre.getBoolean("isON", true)) return;
+            	 param.setResult("00-00-00-00-00-00-00-00");  
              }  
          });  
          XposedHelpers.findAndHookMethod("android.net.wifi.WifiInfo", lpparam.classLoader, "getMacAddress", new XC_MethodHook() {  
              @Override  
              protected void afterHookedMethod(MethodHookParam param) throws Throwable {  
-                 param.setResult("00-00-00-00-00-00-00-00");  
+            	 if(!pre.getBoolean("isON", true)) return;
+            	 param.setResult("00-00-00-00-00-00-00-00");  
              }  
          }); 
 	   XposedHelpers.findAndHookMethod("android.net.wifi.WifiManager", lpparam.classLoader, "isWifiEnabled", new XC_MethodHook() {  
 	       @Override  
 	       protected void afterHookedMethod(MethodHookParam param) throws Throwable {  
-	           param.setResult(false);  
+	    	   if(!pre.getBoolean("isON", true)) return;
+	    	   param.setResult(false);  
 	       }  
 	   });
 	   //判断该LocationProvider是否需要访问网络基站  
 	   XposedHelpers.findAndHookMethod(LocationProvider.class, "requiresCell",  new XC_MethodHook() {  
 	       @Override  
 	       protected void afterHookedMethod(MethodHookParam param) throws Throwable {  
-	           param.setResult(false);  
+	    	   if(!pre.getBoolean("isON", true)) return;
+	    	   param.setResult(false);  
 	       }  
 	   });  
 	   //判断该LocationProvider是否需要网络数据  
 	   XposedHelpers.findAndHookMethod(LocationProvider.class, "requiresNetwork",  new XC_MethodHook() {  
 	       @Override  
 	       protected void afterHookedMethod(MethodHookParam param) throws Throwable {  
-	           param.setResult(false);  
+	    	   if(!pre.getBoolean("isON", true)) return;
+	    	   param.setResult(false);  
 	       }  
 	   });  
 	   XposedHelpers.findAndHookMethod(LocationManager.class, "getLastLocation", new XC_MethodHook() {  
 	       @Override  
 	       protected void afterHookedMethod(MethodHookParam param) throws Throwable {  
-	           Location l = new Location(LocationManager.GPS_PROVIDER);  
+	    	   if(!pre.getBoolean("isON", true)) return;
+	    	   Location l = new Location(LocationManager.GPS_PROVIDER);  
+	           String rec = pre.getString("ll", "32.0263185088+118.7876922371");
+	   			latitude = Double.valueOf(rec.split("\\+")[0]);
+	   			lontitude = Double.valueOf(rec.split("\\+")[1]);
 	           l.setLatitude(latitude);  
 	           l.setLongitude(lontitude);  
 	           l.setAccuracy(100f);  
@@ -184,7 +194,11 @@ public class Main implements IXposedHookLoadPackage{
 	   XposedHelpers.findAndHookMethod(LocationManager.class, "getLastKnownLocation", String.class, new XC_MethodHook() {  
 	       @Override  
 	       protected void afterHookedMethod(MethodHookParam param) throws Throwable {  
-	           Location l = new Location(LocationManager.GPS_PROVIDER);
+	    	   if(!pre.getBoolean("isON", true)) return;
+	    	   Location l = new Location(LocationManager.GPS_PROVIDER);
+	           String rec = pre.getString("ll", "32.0263185088+118.7876922371");
+	   			latitude = Double.valueOf(rec.split("\\+")[0]);
+	   			lontitude = Double.valueOf(rec.split("\\+")[1]);
 	           l.setLatitude(latitude);  
 	           l.setLongitude(lontitude);  
 	           l.setAccuracy(100f);  
@@ -195,7 +209,8 @@ public class Main implements IXposedHookLoadPackage{
 	   XposedBridge.hookAllMethods(LocationManager.class, "getProviders", new XC_MethodHook() {  
 	       @Override  
 	       protected void afterHookedMethod(MethodHookParam param) throws Throwable {  
-	           ArrayList<String> arrayList = new ArrayList<String>();  
+	    	   if(!pre.getBoolean("isON", true)) return;
+	    	   ArrayList<String> arrayList = new ArrayList<String>();  
 	           arrayList.add("gps");  
 	           param.setResult(arrayList);  
 	       }  
@@ -203,13 +218,15 @@ public class Main implements IXposedHookLoadPackage{
 	   XposedHelpers.findAndHookMethod(LocationManager.class, "getBestProvider", Criteria.class, Boolean.TYPE, new XC_MethodHook() {  
 	       @Override  
 	       protected void afterHookedMethod(MethodHookParam param) throws Throwable {  
-	           param.setResult("gps");  
+	    	   if(!pre.getBoolean("isON", true)) return;
+	    	   param.setResult("gps");  
 	       }  
 	   });
 	   XposedHelpers.findAndHookMethod(LocationManager.class, "addGpsStatusListener", GpsStatus.Listener.class, new XC_MethodHook() {  
 	       @Override  
 	       protected void afterHookedMethod(MethodHookParam param) throws Throwable {  
-	           if (param.args[0] != null) {  
+	    	   if(!pre.getBoolean("isON", true)) return;
+	    	   if (param.args[0] != null) {  
 	               XposedHelpers.callMethod(param.args[0], "onGpsStatusChanged", 1);  
 	               XposedHelpers.callMethod(param.args[0], "onGpsStatusChanged", 3);  
 	           }  
@@ -217,57 +234,76 @@ public class Main implements IXposedHookLoadPackage{
 	   });  
 	}
 	
+	// 2018.02.02 由于代码混淆对此处捕获方法名进行修订为e
 	public void fake_gps_data(LoadPackageParam lpparam){
-		XposedHelpers.findAndHookMethod("com.ebeitech.application.QPIApplication", lpparam.classLoader, "getLatitude", new XC_MethodHook() {  
+		XposedHelpers.findAndHookMethod("com.ebeitech.application.QPIApplication", lpparam.classLoader, "e", new XC_MethodHook() {  
             @Override  
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {}  
 
             @Override  
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            	if(pre.getBoolean("isON", true))
+            	if(pre.getBoolean("isON", true)){
+            		String rec = pre.getString("ll", "32.0263185088+118.7876922371");
+            		latitude = Double.valueOf(rec.split("\\+")[0]);
+            		String latitudes = String.valueOf(latitude);
             		param.setResult(latitudes);
+            	}
             }  
         }); 
-		XposedHelpers.findAndHookMethod("com.ebeitech.application.QPIApplication", lpparam.classLoader, "getLongitude", new XC_MethodHook() {  
+		
+		// 2018.02.02 由于代码混淆对此处捕获方法名进行修订为d
+		XposedHelpers.findAndHookMethod("com.ebeitech.application.QPIApplication", lpparam.classLoader, "d", new XC_MethodHook() {  
             @Override  
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {}  
 
             @Override  
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            	if(pre.getBoolean("isON", true))	
+            	if(pre.getBoolean("isON", true)){	
+            		String rec = pre.getString("ll", "32.0263185088+118.7876922371");
+            		lontitude = Double.valueOf(rec.split("\\+")[1]);
+            		String lontitudes = String.valueOf(lontitude);
             		param.setResult(lontitudes);
+            	}
             }  
         }); 
+		
+		// 2018.02.02 百度的SDK包没有添加混淆
 		XposedHelpers.findAndHookMethod("com.baidu.location.BDLocation", lpparam.classLoader, "getLatitude", new XC_MethodHook() {  
             @Override  
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {}  
 
             @Override  
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            	if(pre.getBoolean("isON", true))
+            	if(pre.getBoolean("isON", true)){
+            		String rec = pre.getString("ll", "32.0263185088+118.7876922371");
+            		latitude = Double.valueOf(rec.split("\\+")[0]);
             		param.setResult(latitude);
+            		XposedBridge.log("响应百度地图获取经纬度操作！"+latitude);
+            	}
             }  
         }); 
+		
+		// 2018.02.02 百度的SDK包没有添加混淆
         XposedHelpers.findAndHookMethod("com.baidu.location.BDLocation", lpparam.classLoader, "getLongitude", new XC_MethodHook() {  
             @Override  
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {}  
 
             @Override  
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-            	if(pre.getBoolean("isON", true))
+            	if(pre.getBoolean("isON", true)){
+            		String rec = pre.getString("ll", "32.0263185088+118.7876922371");
+        			lontitude = Double.valueOf(rec.split("\\+")[1]);
             		param.setResult(lontitude);
+            	}
             }  
         });
-		
-		//别改了！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
-		//啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊！！！！！！！！！
-		
-		
+				
 		XposedHelpers.findAndHookMethod("android.location.LocationManager", lpparam.classLoader,  
                 "getGpsStatus", GpsStatus.class, new XC_MethodHook() {  
                     @Override  
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {  
-                        GpsStatus gss = (GpsStatus) param.getResult();  
+                    	if(!pre.getBoolean("isON", true)) return;
+                    	GpsStatus gss = (GpsStatus) param.getResult();  
                         if (gss == null)  
                             return;  
                         Class<?> clazz = GpsStatus.class;  
@@ -312,6 +348,7 @@ public class Main implements IXposedHookLoadPackage{
                 });  
   
         for (Method method : LocationManager.class.getDeclaredMethods()) {  
+        	if(!pre.getBoolean("isON", true)) return;
             if (method.getName().equals("requestLocationUpdates")  
                     && !Modifier.isAbstract(method.getModifiers())  
                     && Modifier.isPublic(method.getModifiers())) {  
@@ -401,12 +438,13 @@ public class Main implements IXposedHookLoadPackage{
   
                     @Override  
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {  
-                        param.setResult(null);
+                    	if(!pre.getBoolean("isON", true)) return;
+                    	param.setResult(null);
                     }  
                 });  
 	}
 	
-	public void fake_photo(LoadPackageParam lpparam){
+	public void fake_photo_and_id(LoadPackageParam lpparam){
 		XposedHelpers.findAndHookMethod("android.content.Intent", lpparam.classLoader, "getStringExtra", String.class , new XC_MethodHook() {  
                     @Override  
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {}  
@@ -422,6 +460,29 @@ public class Main implements IXposedHookLoadPackage{
                     	}
                     }  
                 });  
+		XposedHelpers.findAndHookMethod("com.ebeitech.application.QPIApplication", lpparam.classLoader, "getString", String.class, String.class , new XC_MethodHook() {  
+            @Override  
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+            }  
+            @Override  
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+            	if(!pre.getBoolean("isON", true)) return;
+            	if(!pre.getBoolean("isBoss", false)) return;
+            	
+            	if(((String)param.args[0]).trim().equals("userRole")){
+            		param.setResult("qitazhuguan");
+            		XposedBridge.log("伪造身份完成！");
+            	}
+            	if(((String)param.args[0]).trim().equals("permission")){
+            		param.setResult("jiashicang|shenyue|weixiu|xiangmu|gongsi|wentigenzong|renwu|shebeixunjian|shebeiweibao|anfang|baoshi|cangku|qingliao|xiujia|fangke|shebeichakan");
+            		XposedBridge.log("打开所有功能模块完成！_P1");
+            	}
+            	if(((String)param.args[0]).trim().equals("isManager")){
+            		param.setResult("1");
+            		XposedBridge.log("打开所有功能模块完成！_P2");
+            	}
+            }  
+        });
 		
 	}
 

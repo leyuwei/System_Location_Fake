@@ -28,9 +28,9 @@ import com.leyuwei.tfdsfake.MapDialog.onMapClickData;
 public class MainActivity extends Activity implements OnClickListener,onMapClickData{
 	private Button btn;
 	private Button btn2;
-	private Button btn3;
+	private Button btn3,btn4;
 	private TextView tv,tv3;
-	public boolean isEnabledFake;
+	public boolean isEnabledFake,isBoss;
 	private double lat = 32.0263185088f;
 	private double lon = 118.7876922371f;
 	public String picPath2 = "";
@@ -46,28 +46,50 @@ public class MainActivity extends Activity implements OnClickListener,onMapClick
 		super.onCreate(savedInstanceState);
 		SDKInitializer.initialize(getApplicationContext());
 		setContentView(R.layout.activity_main);
-		setTitle("签到巡逻辅助工具");
+		setTitle("随意停");
+		getActionBar().setDisplayUseLogoEnabled(false);
+		getActionBar().setDisplayShowHomeEnabled(false);
+		
+		
 		btn = (Button) findViewById(R.id.button1);
 		btn2 = (Button) findViewById(R.id.button2);
 		btn3 = (Button) findViewById(R.id.button3);
+		btn4 = (Button) findViewById(R.id.button4);
 		btn.setOnClickListener(this);
 		btn2.setOnClickListener(this);
 		btn3.setOnClickListener(this);
+		btn4.setOnClickListener(this);
 		tv = (TextView) findViewById(R.id.textView2);
 		tv3 = (TextView) findViewById(R.id.textView3);
 		tv3.setOnClickListener(this);
 		isEnabledFake = true;
+		isBoss = false;
 		
 		sp = getSharedPreferences("Global", Activity.MODE_WORLD_READABLE);
 		editor = sp.edit();
 		editor.putBoolean("isON", true);
+		editor.putBoolean("isBoss", false);
 		editor.putString("ll", "32.0263185088+118.7876922371");
 		editor.commit();
+		FileUtils.makeRootDirectory(FileUtils.SDPATH); //1.1版本修复问题
+		if(sp.getBoolean("isFirst3.0", true)){
+			AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+			builder.setTitle("新版本说明")
+				   .setMessage("V3.0版本更新内容：\n1.针对物业管家新版本混淆进行了代码优化\n2.优化了GPS数据劫持稳定性")
+				   .setPositiveButton("进入应用", new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							editor.putBoolean("isFirst3.0", false);
+							editor.commit();
+						}
+				   })
+				   .show();
+		}
 
 		TelephonyManager telephonyManager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
 		String imei = telephonyManager.getDeviceId();
 		addLog("设备imei:"+imei);
-		addLog("开始自动伪造...");
+		addLog("开始注入虚拟位置...");
 	}
 	
 	public static void T(Activity a, String x){
@@ -82,11 +104,11 @@ public class MainActivity extends Activity implements OnClickListener,onMapClick
 			editor.putBoolean("isON", isEnabledFake);
 			editor.commit();
 			if(isEnabledFake){
-				btn.setText("暂停伪造");
-				addLog("已经开始进行伪造...");
+				btn.setText("暂停虚拟");
+				addLog("已经开始注入虚拟位置...");
 			}else{
-				btn.setText("开启伪造");
-				addLog("已经停止伪造状态...");
+				btn.setText("开启虚拟");
+				addLog("已经停止注入虚拟位置...");
 			}
 			break;
 		case R.id.button2:
@@ -110,6 +132,19 @@ public class MainActivity extends Activity implements OnClickListener,onMapClick
 			MapDialog dialog = new MapDialog(); 
 			dialog.setCancelable(true);
 	        dialog.show(getFragmentManager(), "mapDialog"); 
+			break;
+		case R.id.button4:
+			isBoss = !isBoss;
+			editor.putBoolean("isBoss", isBoss);
+			editor.commit();
+			if(isBoss){
+				btn4.setText("我是老板");
+				addLog("已经进入老板模式...");
+			}else{
+				btn4.setText("我是员工");
+				addLog("已经进入员工模式...");
+			}
+			addLog("请您务必重新启动应用以适应更改！");
 			break;
 		}
 		
@@ -169,25 +204,36 @@ public class MainActivity extends Activity implements OnClickListener,onMapClick
 	            cursor.moveToFirst();  
 	            // 最后根据索引值获取图片路径  
 	            picPath2 = cursor.getString(column_index);
-	            addLog("已选定图片："+picPath2);
+	            addLog("用户选定图片："+picPath2);
 	            BitmapUtil.saveImgToDisk("tempfile"+File.separator+"tfdsTEMP.jpg", BitmapCompressor.compressBitmap(BitmapUtil.getDiskBitmap(picPath2), 600));
 	            picPath2 = BitmapUtil.getSdCardPath() + File.separator + "tempfile" + File.separator + "tfdsTEMP.jpg";
 	            addLog("已压缩照片至："+picPath2);
-	            addLog("请切回应用并打开摄像头拍照");
+	            addLog("已成功注入，请切回应用并拍照");
 			}
 		}
 	}
 
 	@Override
 	public void onMapClickComplete(LatLng ll) {
+		editor.putBoolean("isON", false); //1.1版本修正
+		editor.commit();
 		lat = ll.latitude;
 		lon = ll.longitude;
 		DecimalFormat decimalFormat=new DecimalFormat(".0000");//构造方法的字符格式这里如果小数不足2位,会以0补足.
-		String s = "点选伪造坐标："+decimalFormat.format(lat)+", "+decimalFormat.format(lon);
+		String s = "点选虚拟坐标："+decimalFormat.format(lat)+", "+decimalFormat.format(lon);
 		tv3.setText(s);
 		editor.putString("ll", String.valueOf(lat)+"+"+String.valueOf(lon));
 		editor.commit();
 		addLog(s);
-		addLog("伪造坐标已更改完成");
+		addLog("虚拟坐标已更改完成");
+		editor.putBoolean("isON", true);
+		editor.commit();
+		
+		//1.1版本优化
+		AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+		builder.setTitle("更改位置说明")
+			   .setMessage("您刚刚成功更改了虚拟坐标，为了保证在其他APP中能及时响应，可能需要您在任务管理中结束其所有后台之后重新启动，以免其不能正确响应新位置")
+			   .setPositiveButton("OK", null)
+			   .show();
 	}
 }
